@@ -1,32 +1,5 @@
 # build indexes from logan data
 
-## IOs
-
-**IN**
-
-* SRA, nov 2023.
-  
-  * 43P compressed data,
-  * 23,404,547 documents 
-
-**OUT**
-
-* A general index able to detect where (without abundances) a query occurs.
-
-
-## Full indexing pipeline
-Support slides can be found here: https://docs.google.com/presentation/d/1RuqcpMkTfnLv1DmW3Z1mbS5gw9MQhdUOSL5Fcm_3KBg
-
-
-### Steps:
-1. get data info
-2. generate groups
-3. generate fofs
-4. create first matrices for each group
-5. create other matrices for each group
-6. merge matrices
-7. clean matrices
-
 
 ### 1. get data infos
 Stats about logan accessions 
@@ -96,6 +69,7 @@ for index in fofs/0s/*.txt;
     real_bf_size=$( echo "(-( 2^(${log_bf_size}+1) )* l($p) / l(2)^2) / 1" | bc -l | cut -d "." -f 1 ) 
     
     echo "log_bf_size " ${log_bf_size} " real_bf_size " ${real_bf_size} " nb_threads " ${nb_threads}
+    done
 
     cmd="kmtricks pipeline --file ${index}                    \
                     --run-dir ${out_index_name}               \
@@ -147,20 +121,12 @@ for index in fofs/others/*.txt;
     real_bf_size=$( echo "(-( 2^(${log_bf_size}+1) )* l($p) / l(2)^2) / 1" | bc -l | cut -d "." -f 1 ) 
 
 
-    ### Fetch repartition.minimRepart  
-    zero_dir_group=0_${log_bf_size}
-    run_dir_hash=$(grep -w ${zero_dir_group} $runid_to_hash |  head -n 1 | cut -d " " -f2)
-    # repart_file = channel.fromPath( 'az://indextheplanet/${params.libking}/${run_dir_hash}/${zero_dir_group}/repartition_gatb/repartition.minimRepart' )
-    
-    echo cp "${repart_address}" "." | xargs azcopy 
- 
     
     ##### Run kmtricks
 
-    ulimit -n 98304
     # kmtricks_input_file is <INDEX_ID>_<BF_SIZE>.fof
     echo "log_bf_size " ${log_bf_size} " real_bf_size " ${real_bf_size} " nb_threads " ${nb_threads}
-    kmtricks pipeline --file ${index}                           \
+    cmd="kmtricks pipeline --file ${index}                           \
                       --run-dir ${out_index_name}               \
                       --bloom-size ${real_bf_size}             \
                       --kmer-size 25                            \
@@ -170,7 +136,9 @@ for index in fofs/others/*.txt;
                       --cpr                                     \
                       --threads ${nb_threads}			            \
                       --verbose error                           \
-                      --repart-from ${zero_dir_group}/repartition.minimRepart
+                      --repart-from ${zero_dir_group}/repartition_gatb/repartition.minimRepart"
+    echo $cmd
+    $cmd 
 
     ##### Clean the output directory
     rm -rf ${index_basename}/fpr \
@@ -184,55 +152,59 @@ for index in fofs/others/*.txt;
     ${index_basename}/minimizers
   done
 ```
-HERE, UNTESTED ON MAC
-### 6. merge matrices
+
+
+### 5. merge matrices
+Run register/merge/register:
 ```bash
-sh scripts/launch_merges.sh
+  
+if sudo [ -d index ]; then
+  echo "WARNING a previous registered index existed in index" >&2
+  echo "I remove it"
+  sudo rm -rf index
+fi
+
+echo "\t Prepare a list to register by size"
+cmd="sudo python3  scripts/path_maker.py  --parent-directory . --root-dir ."
+echo $cmd  > list.txt
+$cmd > list.txt
+if [ $? -ne 0 ]; then
+  echo "Creation of the list for registering failed"
+fi
+
+echo "\t Register by size"
+cmd="sh scripts/register_per_size.sh -i . -f list.txt"
+echo $cmd
+$cmd
+if [ $? -ne 0 ]; then
+  echo "Register by size failed"
+fi
+
+echo "\t Merge by sizes"
+cmd="nextflow -log log_merge_${now} run scripts/run_merge.nf -w . --list_indexes list.txt"
+echo $cmd
+$cmd
+if [ $? -ne 0 ]; then
+  echo "Merge by sizes failed"
+fi
+
+
+echo "\t Register merged files in a unique index (few seconds)"
+cmd="sh scripts/register_merged.sh -i ."
+echo $cmd
+$cmd
+if [ $? -ne 0 ]; then
+  echo "Register merged files failed"
+  exit 1
+fi
+
 ```
-This script calls `run_kmtricks.sh` with option `-m` (merge) for each group that are in directory `to_merge`.
-In turn, this scripts calls run_merge.nf nexflow script.
-Succesful groups are moved to directory `merged`.
 
 ### 7. clean matrices
-```bash
-sh scripts/launch_cleans.sh
-```
-This script calls `clean_merged_indexes.py` for each group that are in directory `merged`.
-Succesful groups are moved to directory `cleaned`.
+Make a script for cleaning the merged matrices. Please lool at script "clean_merged_indexes.py" for an example on the logan data
 
 
 
 ## Perform a query
 ```bash
-mount_point=/tmp/data
-GROUP=TRANSCRIPTOMIC_VRT
-sudo kmindex query -i ${mount_point}/${GROUP}/index_${GROUP} -q query.fa -o output_query_${GROUP} -z 5 -r 0.1
-```
-Show best hits: 
-```bash
-grep -v "{" output_query_${GROUP}/*.json | grep -v "}" | sort -k 3 -gr
-or
-find . -name "*.json" -type f -size +50c -exec grep -v "\{"  \{\} \; | grep -v "\}" | sort -k 2 -gr | head
-```
-
-Validation usint back_to_sequences: 
-```bash
-accession=SRR14660268
-aws s3 cp s3://logan-pub/u/${accession}/${accession}.unitigs.fa.zst . --no-sign-request
-zstd -d ${accession}.unitigs.fa.zst
-back_to_sequences --in-kmers query_VC-like_18s.fa --in-sequences ${accession}.unitigs.fa --out-sequences out_${accession}_query_VC-like_18s.fa --out-kmers out_${accession}_query_VC-like_18s_kmers.txt -m 5
-```
-
-## Query against all groups: 
-```bash
-for name in `ls -Sr /home/azureuser/kmsra/groups/group_*`; do 
-	GROUP=`echo $name | cut -d "." -f 1 | cut -d "_" -f 2,3`; 
-	echo $GROUP; 
-	sudo ./kmindex query -i ${mount_point}/${GROUP}/index_${GROUP} -q query.fa -o output_query_${GROUP} -z 5 -r 0.4  > log_$GROUP.txt 2>&1 || break
-done
-```
-
-Find non empty results: 
-```bash
-find . -name *.json -type f -size +40c -exec ls -l \{} \;
-```
+kmindex query -i index -q query.fa -o output_query -z 5 -r 0.1
