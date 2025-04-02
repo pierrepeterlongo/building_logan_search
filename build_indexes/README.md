@@ -136,7 +136,7 @@ for index in fofs/others/*.txt;
                       --cpr                                     \
                       --threads ${nb_threads}			            \
                       --verbose error                           \
-                      --repart-from ${zero_dir_group}/repartition_gatb/repartition.minimRepart"
+                      --repart-from ${zero_dir_group}"
     echo $cmd
     $cmd 
 
