@@ -104,13 +104,14 @@ class FileList:
     
 
 def main():
-    if len(sys.argv) != 5:
-        print("Usage: python create_fof.py accessions_file stat_file out_directory_name kmer_size")
+    # get the directory name from the command line
+    # check that there is only one argument
+    if len(sys.argv) != 4:
+        print("Usage: python create_fof.py tsv_file out_directory_name kmer_size")
         exit(1)
-    accessions_file = sys.argv[1]
-    stat_file = sys.argv[2]
-    directory_name = sys.argv[3]
-    kmer_size = int(sys.argv[4])
+    tsv_file = sys.argv[1]
+    directory_name = sys.argv[2]
+    kmer_size = int(sys.argv[3])
     # check that the directory exists
     if not os.path.isdir(directory_name):
         os.mkdir(directory_name) 
@@ -121,15 +122,23 @@ def main():
     fl = FileList()
     nb_files = 0
     sum_nb_kmers = 0
-    print(f"indexing sizes from {stat_file}")
-    id_to_size = index_id_to_size(stat_file, kmer_size)
+    sizes_file="dynamodb_tigs_stats.csv"
+    print(f"indexing sizes from {sizes_file}")
+    id_to_size = index_id_to_size(sizes_file, kmer_size)
     print(f"Load files to be fofed")
     nb_not_found = 0
     # prev_id=""
-    with open(accessions_file) as file: 
-        for name in file: # DRR000001
-            name = name.strip()
-            # print(f"Processing {name}")
+    with open(tsv_file) as file: 
+        for tsv_line in file: # "DRR000001","GENOMIC","730","186817","1616243"
+            
+            fields = tsv_line.strip().split(",")
+            # try:
+            #     cur_id = fields[0].strip("\"")
+            #     if cur_id == prev_id: continue # 2nd and 3rd entries are minor, only use the first occurrence of an id.
+            #     prev_id = cur_id
+            # except IndexError:
+            #     print(f"IndexError occurred at line {line}")
+            name = fields[0].strip("\"")
             if name not in id_to_size:
                 nb_not_found += 1
                 if nb_not_found == 1:
@@ -145,7 +154,7 @@ def main():
         print(f"Fofing")
         fl.create_ipfs(directory_name)
     print(f"Done, fofs are in directory {directory_name}")
-    print(f"There were {nb_not_found} accessions not in file {stat_file}")
+    print(f"There were {nb_not_found} accessions not in file {sizes_file}")
     print(f"This is {round(100*nb_not_found/nb_files,2)}% of the file")
     print(f"Statistics for {directory_name}: {nb_files} accessions {sum_nb_kmers} cumulated kmers")
     
