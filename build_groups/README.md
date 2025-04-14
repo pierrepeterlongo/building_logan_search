@@ -1,4 +1,7 @@
 
+This is how we created the groups used in logan search. 
+
+- Note: the group divisions are based on the STAT annotation. For each accession up to three distinct taxonomic ids are proposed. We chose the first of them, that is the one corresponding to the most probable. 
 
 ### 1. get the link to data
 ```bash
