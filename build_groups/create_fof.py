@@ -127,17 +127,10 @@ def main():
     id_to_size = index_id_to_size(sizes_file, kmer_size)
     print(f"Load files to be fofed")
     nb_not_found = 0
-    # prev_id=""
     with open(tsv_file) as file: 
         for tsv_line in file: # "DRR000001","GENOMIC","730","186817","1616243"
             
             fields = tsv_line.strip().split(",")
-            # try:
-            #     cur_id = fields[0].strip("\"")
-            #     if cur_id == prev_id: continue # 2nd and 3rd entries are minor, only use the first occurrence of an id.
-            #     prev_id = cur_id
-            # except IndexError:
-            #     print(f"IndexError occurred at line {line}")
             name = fields[0].strip("\"")
             if name not in id_to_size:
                 nb_not_found += 1
@@ -145,11 +138,9 @@ def main():
                     print(f"first not found: {name}")
                 continue
             nb_files += 1
-            # assert name in id_to_size, f"{name} not found in {sizes_file}"
             file_size = id_to_size[name]
             sum_nb_kmers += file_size
             file_path = f"{name}.unitigs.fa.zst"
-            # print(f"file {file_path}, has size {file_size}")
             fl.add_file(File(name, file_size, file_path))
         print(f"Fofing")
         fl.create_ipfs(directory_name)

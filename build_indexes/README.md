@@ -1,29 +1,11 @@
 # build indexes from logan data
 
+For each group and each bloom filter size, an index (a set of bloom filters) is created. This index is composed of sub-indexes that are merged together. Once the first sub-index is created, the later re-use the repartition function of the first one.
 
-### 1. get data infos
-Stats about logan accessions 
-```bash
-aws s3 cp s3://serratus-rayan/tmp/dynamodb_tigs_stats.csv . --no-sign-request
+## 📝 Notes
+This README does not contains the aws nextflow specific commands, but only the commands that can be run locally. 
 
-head -n 3 dynamodb_tigs_stats.csv 
-accession,seqstats_unitigs_nbseq,seqstats_unitigs_sumlen
-ERR12325358,249,18065
-SRR19715583,209594,8266318
-```
-
-All indexed logan accessions are in `logan_info` directory
-
-### 2. generate file of files
-```bash
-# example
-mkdir fofs
-python scripts/create_fof.py logan_infos/indexed_accesssions.txt dynamodb_tigs_stats.csv fofs 25
-```
-Generates fof directories
-
-
-### 3. create first matrices 
+### 1. create first matrices 
 ```bash
 
 export AWS_EC2_METADATA_DISABLED=true
@@ -97,7 +79,7 @@ for index in fofs/0s/*.txt;
   done
 ```
 
-### 4. create other matrices 
+### 2. create other matrices 
 ```bash
 for index in fofs/others/*.txt;
   do
@@ -154,7 +136,7 @@ for index in fofs/others/*.txt;
 ```
 
 
-### 5. merge matrices
+### 3. merge matrices
 Run register/merge/register:
 ```bash
   
@@ -199,10 +181,6 @@ if [ $? -ne 0 ]; then
 fi
 
 ```
-
-### 7. clean matrices
-Make a script for cleaning the merged matrices. Please lool at script "clean_merged_indexes.py" for an example on the logan data
-
 
 
 ## Perform a query

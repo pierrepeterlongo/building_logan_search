@@ -8,8 +8,6 @@ def index_superkingdom():
             fields = l.split("\t|\t")
             division_name[fields[0]] = fields[1]
     
-    # print(division_name)
-    
     taxid_superkingdom = {}
     with open ("nodes.dmp") as file: 
         for l in file: 
@@ -34,43 +32,6 @@ def get_accessions(in_file):
     return identifiers 
     
             
-# # AVOIDED: (HTTP Error 429: Too Many Requests)
-# def get_superkingdom(taxid):
-#     Entrez.email = "pierre.peterlongo@inria.fr"   # Provide your email address
-#     try:
-#         handle = Entrez.efetch(db="taxonomy", id=taxid, retmode="xml")
-#         records = Entrez.read(handle)
-#         handle.close()
-#     except HTTPError:
-#         return None
-#     # print(records)
-#     if len(records) > 0:
-#         lineage = records[0]['LineageEx']
-#         for item in lineage:
-#             rank = item['Rank']
-#             if rank == 'superkingdom':
-#                 name = item['ScientificName']
-#                 return name
-#     else:
-#         return None
-    
-# # print(f"{get_superkingdom(81850)}")
-# # exit()
-
-# superkingdom_mapping = {
-#     "Bacteria": "BCT",
-#     "Invertebrates": "INV",
-#     "Mammals": "MAM",
-#     "Phages": "PHG",
-#     "Plants and Fungi": "PLN",
-#     "Primates": "PRI",
-#     "Rodents": "ROD",
-#     "Synthetic and Chimeric": "SYN",
-#     "Unassigned": "UNA",
-#     "Viruses": "VRL",
-#     "Vertebrates": "VRT",
-#     "Environmental samples": "ENV"
-# }
 
 def process_file(input_file, taxid_superkingdom, to_index_accessions, public_file, logan_stats, logan_dispo):
     output_files = {}
@@ -124,10 +85,6 @@ def process_file(input_file, taxid_superkingdom, to_index_accessions, public_fil
                 cur_id = fields1[0].strip("\"")
                 nb_distinct += 1
                 
-                to_index = cur_id in to_index_accessions
-                # if cur_id == "SRR13749744":
-                #     print(f"parsing line SRR13749744 : in to_index: {to_index}")
-                    
                 if cur_id not in to_index_accessions: 
                     nb_not_indexed += 1
                     line1 = future_line1
@@ -173,8 +130,6 @@ def process_file(input_file, taxid_superkingdom, to_index_accessions, public_fil
                 output_files[output_filename] = open(output_filename, 'w')
             
             assert cur_id == line1.split(",")[0].strip("\""), f"accession is {cur_id} while line1 is {line1}"
-            # assert cur_id != "SRR13749744", f"{line1} should not be here"
-            # print(f"writing {line1} in {output_filename}")
             output_files[output_filename].write(line1)
             line1 = future_line1
     
@@ -200,9 +155,6 @@ def process_file(input_file, taxid_superkingdom, to_index_accessions, public_fil
 def main():
     import sys
 
-# input_file = "sra_01122023_acc_librarysource_mbases_tax_id_total_count.tsv"
-# input_file = "sra_09042024_acc_librarysource_mbases_tax_id_total_count.tsv"
-    # input_file = "sra_09042024_public.tsv"
     # Check if correct number of arguments are provided
     if len(sys.argv) != 5:
         print("Usage: python script.py sra_XXX_acc_librarysource_mbases_tax_id_total_count sra_XXX_public.tsv pub-u.acc.txt dynamodb_tigs_stats.csv")
