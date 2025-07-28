@@ -1,8 +1,8 @@
 # build indexes from logan data
 
-For each group and each bloom filter size, an index (a set of bloom filters) is created. This index is composed of sub-indexes that are merged together. Once the first sub-index is created, the later re-use the repartition function of the first one.
+For each group and each bloom filter size, an index (a set of bloom filters) is created. This index is composed of sub-indexes that are merged together. Once the first sub-index is created, the later re-use the repartition function of the first one. This enables the final merging of the sub-indexes.
 
-## 📝 Notes
+## Notes
 This README does not contains the aws nextflow specific commands, but only the commands that can be run locally. 
 
 ### 1. create first matrices 
@@ -186,3 +186,4 @@ fi
 ## Perform a query
 ```bash
 kmindex query -i index -q query.fa -o output_query -z 5 -r 0.1
+```

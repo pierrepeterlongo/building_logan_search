@@ -11,14 +11,14 @@ This is how we created the groups used in Logan search.
 mkdir unitigs_logan 
 cd unitigs_logan
 
-# Download SRA metadata (⚠️ DO NOT USE ALL - Contains Private accessions)
+# List of public accessions 
+wget https://serratus-rayan.s3.amazonaws.com/kmindex/sra_09042024_public.tsv
+
+# Download SRA metadata from logan
 wget https://serratus-rayan.s3.amazonaws.com/kmindex/sra_09042024_acc_librarysource_mbases_tax_id_total_count.tsv
 
 # Data for which we have stats
 aws s3 cp s3://serratus-rayan/tmp/dynamodb_tigs_stats.csv . --no-sign-request
-
-# Public data 
-wget https://serratus-rayan.s3.amazonaws.com/kmindex/sra_09042024_public.tsv
 
 # Link from tax_id to superkingdom
 wget https://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
@@ -31,10 +31,10 @@ s5cmd --no-sign-request ls s3://logan-pub/u/* | awk '{print $4}' | cut -d '/' -f
 aws s3 cp s3://serratus-rayan/tmp/pub-u.acc.txt . --no-sign-request
 ```
 
-### Validation and Statistics
+## 2. Prepare the data
 
 ```bash 
-# Check public data coverage in main metadata file
+# Get data for which one has metadata
 python3 compare_identifiers.py sra_09042024_public.tsv sra_09042024_acc_librarysource_mbases_tax_id_total_count.tsv     
 ```
 
@@ -47,7 +47,7 @@ Entries from sra_09042024_public.tsv not found in sra_09042024_acc_librarysource
 ```
 
 ```bash
-# Check public data coverage in Logan unitigs (in dynamodb_tigs_stats)
+# Check data coverage in Logan unitigs (in dynamodb_tigs_stats)
 python3 compare_identifiers.py sra_09042024_public.tsv dynamodb_tigs_stats.csv 
 ```
 
@@ -73,7 +73,7 @@ python3 comp_and_size.py dynamodb_tigs_stats.csv sra_09042024_acc_librarysource_
    - Size data from sra_09042024_public.tsv
 ```
 
-## 2. Generate Groups
+## 3. Generate Groups
 
 ```bash
 python3 filter_and_spread_taxo.py \
@@ -83,7 +83,7 @@ python3 filter_and_spread_taxo.py \
     dynamodb_tigs_stats.csv
 ```
 
-**Obtained processing results:**
+**Obtained output:**
 ```
 Done. I treated 25,549,078 distinct accessions from file sra_09042024_acc_librarysource_mbases_tax_id_total_count.tsv
 Among them, 2,144,423 accessions are discarded (8.39%) either because they are not in sra_09042024_public.tsv or dynamodb_tigs_stats.csv or pub-u.acc.txt.
@@ -94,7 +94,7 @@ Distinct library sources: {'TRANSCRIPTOMICSINGLECELL', 'GENOMIC', 'OTHER', 'VIRA
 Distinct superkingdoms: {'VRT', 'MAM', 'VRL', 'UNKNOWN', 'BCT', 'MICE', 'ROD', 'HUMAN', 'ENV', 'PRI', 'INV', 'PHG', 'PLN'}
 ```
 
-## 3. Generate File-of-Files (FOFs)
+## 4. Generate File-of-Files (FOFs)
 
 Generates FOF directories in `fof_dir`:
 

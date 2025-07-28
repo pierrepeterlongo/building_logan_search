@@ -3,7 +3,7 @@
 This repository contains tools and scripts for building Logan search groups and indexes from logan unitig data. The project is organized into two main components: group creation and index building.
 
 
-## 🔍 Overview
+## Overview
 
 This repository provides the infrastructure to:
 
@@ -15,7 +15,7 @@ The system processes logan unitig data and organizes it by:
 - Library source type (genomic, transcriptomic, metagenomic, etc.)
 - Data size for optimal processing groups
 
-## 📝 Notes
+## Notes
 
 - Group divisions are based on STAT annotation
 - For each accession, up to three taxonomic IDs are available; the first (most probable) is used
