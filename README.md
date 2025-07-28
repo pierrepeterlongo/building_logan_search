@@ -7,8 +7,8 @@ This repository contains tools and scripts for building Logan search groups and 
 
 This repository provides the infrastructure to:
 
-1. **Build search groups** - Organize genomic accessions into taxonomically and size-based groups
-2. **Create search indexes** - Generate efficient indexes for fast querying
+1. **[Build search groups](build_groups/README.md)** - Organize genomic accessions into taxonomically and size-based groups
+2. **[Create search indexes](build_indexes/README.md)** - Generate efficient indexes for fast querying
 
 The system processes logan unitig data and organizes it by:
 - Taxonomic classification (superkingdom level, except for human and mouse)
