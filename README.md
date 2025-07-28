@@ -19,6 +19,5 @@ The system processes logan unitig data and organizes it by:
 
 - Group divisions are based on STAT annotation
 - For each accession, up to three taxonomic IDs are available; the first (most probable) is used
-- The system handles both public and private data, with filtering for public-only processing
 - Size-based grouping optimizes memory usage during index creation
 
