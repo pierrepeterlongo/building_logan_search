@@ -11,8 +11,10 @@ This is how we created the groups used in Logan search.
 mkdir unitigs_logan 
 cd unitigs_logan
 
-# List of public accessions 
-wget https://serratus-rayan.s3.amazonaws.com/kmindex/sra_09042024_public.tsv
+# List of public accessions
+aws s3 cp s3://serratus-rayan/kmindex/sra_09042024_public.tsv . --no-sign-request
+#or
+#wget https://serratus-rayan.s3.amazonaws.com/kmindex/sra_09042024_public.tsv
 
 # Download SRA metadata from logan
 wget https://serratus-rayan.s3.amazonaws.com/kmindex/sra_09042024_acc_librarysource_mbases_tax_id_total_count.tsv
